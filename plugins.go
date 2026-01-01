@@ -5,12 +5,46 @@ package config
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/btcsuite/btcutil/base58"
 )
+
+const (
+	// Well-known VM names
+	VMNameLuxEVM = "Lux EVM"
+	VMNameCoreVM = "Core VM"
+	VMNameAVM    = "AVM"
+)
+
+// VMID computes the VM ID from a VM name.
+// This is the standard way to compute VMID: base58check(sha256(pad32(vmName)))
+// Example: "Lux EVM" -> "ag3GReYPNuSR17rUP8acMdZipQBikdXNRKDyFszAysmy3vDXE"
+func VMID(vmName string) string {
+	// Pad to 32 bytes
+	padded := make([]byte, 32)
+	copy(padded, []byte(vmName))
+
+	// SHA256 hash
+	hash := sha256.Sum256(padded)
+
+	// Base58 encode (with checksum)
+	return base58.CheckEncode(hash[:], 0)
+}
+
+// WellKnownVMIDs returns a map of well-known VM names to their IDs
+func WellKnownVMIDs() map[string]string {
+	return map[string]string{
+		VMNameLuxEVM: VMID(VMNameLuxEVM),
+		VMNameCoreVM: VMID(VMNameCoreVM),
+		VMNameAVM:    VMID(VMNameAVM),
+	}
+}
 
 // PluginInfo describes an installed plugin
 type PluginInfo struct {
@@ -252,8 +286,115 @@ func (pm *DefaultPluginManager) Exists(vmID string) bool {
 	return err == nil && !info.IsDir()
 }
 
+// Link creates a symlink from the plugin directory to a VM binary.
+// This is the preferred way to "install" a VM for development.
+func (pm *DefaultPluginManager) Link(vmID, binaryPath string) error {
+	// Ensure plugin directory exists
+	if err := pm.EnsureDir(); err != nil {
+		return fmt.Errorf("failed to create plugin directory: %w", err)
+	}
+
+	// Resolve the binary path to absolute
+	absPath, err := filepath.Abs(binaryPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve binary path: %w", err)
+	}
+
+	// Verify binary exists and is executable
+	info, err := os.Stat(absPath)
+	if err != nil {
+		return fmt.Errorf("binary not found: %w", err)
+	}
+	if info.Mode()&0111 == 0 {
+		return fmt.Errorf("binary is not executable: %s", absPath)
+	}
+
+	linkPath := pm.GetPath(vmID)
+
+	// Remove existing file/symlink if present
+	if _, err := os.Lstat(linkPath); err == nil {
+		if err := os.Remove(linkPath); err != nil {
+			return fmt.Errorf("failed to remove existing file: %w", err)
+		}
+	}
+
+	// Create symlink
+	if err := os.Symlink(absPath, linkPath); err != nil {
+		return fmt.Errorf("failed to create symlink: %w", err)
+	}
+
+	return nil
+}
+
+// LinkByName creates a symlink using the VM name to compute VMID
+func (pm *DefaultPluginManager) LinkByName(vmName, binaryPath string) error {
+	vmID := VMID(vmName)
+	return pm.Link(vmID, binaryPath)
+}
+
+// IsSymlink checks if a plugin path is a symlink
+func (pm *DefaultPluginManager) IsSymlink(vmID string) bool {
+	path := pm.GetPath(vmID)
+	info, err := os.Lstat(path)
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeSymlink != 0
+}
+
+// GetTarget returns the target of a plugin symlink
+func (pm *DefaultPluginManager) GetTarget(vmID string) (string, error) {
+	path := pm.GetPath(vmID)
+	if !pm.IsSymlink(vmID) {
+		return "", fmt.Errorf("plugin %s is not a symlink", vmID)
+	}
+	return os.Readlink(path)
+}
+
+// Verify checks if a plugin is properly installed and executable
+func (pm *DefaultPluginManager) Verify(vmID string) error {
+	pluginPath := pm.GetPath(vmID)
+
+	// Check if exists
+	info, err := os.Lstat(pluginPath)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("plugin %s not installed", vmID)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to check plugin: %w", err)
+	}
+
+	// If symlink, verify target
+	if info.Mode()&os.ModeSymlink != 0 {
+		target, err := os.Readlink(pluginPath)
+		if err != nil {
+			return fmt.Errorf("failed to read symlink: %w", err)
+		}
+
+		// Resolve relative symlinks
+		if !filepath.IsAbs(target) {
+			target = filepath.Join(filepath.Dir(pluginPath), target)
+		}
+
+		info, err = os.Stat(target)
+		if os.IsNotExist(err) {
+			return fmt.Errorf("plugin symlink target missing: %s", target)
+		}
+		if err != nil {
+			return fmt.Errorf("failed to check symlink target: %w", err)
+		}
+	}
+
+	// Verify executable
+	if info.Mode()&0111 == 0 {
+		return fmt.Errorf("plugin is not executable")
+	}
+
+	return nil
+}
+
 // ResolvePluginBaseDir returns the base plugin directory
-// This contains packages/, active/, and registry.json
+// This contains packages/, current/, and registry.json
 func ResolvePluginBaseDir() string {
 	// 1. Check environment variable first
 	if dir := os.Getenv("LUX_PLUGIN_DIR"); dir != "" {
@@ -284,19 +425,19 @@ func ResolvePluginBaseDir() string {
 }
 
 // ResolvePluginDir resolves the plugin directory using the configuration stack
-// This returns the "active" directory where VMID symlinks live for node compatibility
+// This returns the "current" directory where VMID symlinks live for node compatibility
 // Structure:
 //   ~/.lux/plugins/
 //   ├── packages/luxfi/evm/v1.0.0/  # Actual packages
-//   ├── active/ag3GReY.../          # VMID symlinks (what node uses)
+//   ├── current/ag3GReY.../         # VMID symlinks (what node uses)
 //   └── registry.json
 func ResolvePluginDir() string {
 	baseDir := ResolvePluginBaseDir()
 
-	// Check if new structure exists (has active/ subdirectory)
-	activeDir := filepath.Join(baseDir, "active")
-	if info, err := os.Stat(activeDir); err == nil && info.IsDir() {
-		return activeDir
+	// Check if new structure exists (has current/ subdirectory)
+	currentDir := filepath.Join(baseDir, "current")
+	if info, err := os.Stat(currentDir); err == nil && info.IsDir() {
+		return currentDir
 	}
 
 	// Fall back to legacy structure (plugins directly in base dir)

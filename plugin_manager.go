@@ -26,13 +26,13 @@ import (
 // │   │       └── v0.1.0/
 // │   └── myuser/
 // │       └── myvm/
-// ├── active/                            # VMID symlinks (what node uses)
+// ├── current/                           # VMID symlinks (what node uses)
 // │   └── ag3GReYPNuSR... -> ../packages/luxfi/evm/v1.0.0/evm
 // └── registry.json                      # Local registry of installed packages
 
 const (
 	packagesDir  = "packages"
-	activeDir    = "active" // Symlinks by VMID for node compatibility
+	activeDir    = "current" // Symlinks by VMID for node compatibility (unified with SDK constants.CurrentPluginDir)
 	registryFile = "registry.json"
 )
 
