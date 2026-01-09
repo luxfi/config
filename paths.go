@@ -61,9 +61,9 @@ const (
 	UpgradeFile = "upgrade.json"
 
 	// File names for node keys
-	StakingKeyFile     = "staking.key"
-	StakingCertFile    = "staking.crt"
-	SignerKeyFile      = "signer.key"
+	StakingKeyFile  = "staking.key"
+	StakingCertFile = "staking.crt"
+	SignerKeyFile   = "signer.key"
 
 	// Network names
 	NetworkMainnet = "mainnet"

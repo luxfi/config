@@ -427,10 +427,11 @@ func ResolvePluginBaseDir() string {
 // ResolvePluginDir resolves the plugin directory using the configuration stack
 // This returns the "current" directory where VMID symlinks live for node compatibility
 // Structure:
-//   ~/.lux/plugins/
-//   ├── packages/luxfi/evm/v1.0.0/  # Actual packages
-//   ├── current/ag3GReY.../         # VMID symlinks (what node uses)
-//   └── registry.json
+//
+//	~/.lux/plugins/
+//	├── packages/luxfi/evm/v1.0.0/  # Actual packages
+//	├── current/ag3GReY.../         # VMID symlinks (what node uses)
+//	└── registry.json
 func ResolvePluginDir() string {
 	baseDir := ResolvePluginBaseDir()
 

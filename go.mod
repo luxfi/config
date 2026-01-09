@@ -1,6 +1,6 @@
 module github.com/luxfi/config
 
-go 1.24.0
+go 1.24.9
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
