@@ -35,7 +35,7 @@ const (
 	DBTypeKey      = "db-type"
 
 	// Config file
-	ConfigFileKey = "config"
+	ConfigFileKey = "config-file"
 )
 
 // AddGlobalFlags adds common flags used by all Lux components
