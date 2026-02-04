@@ -161,7 +161,7 @@ func (c *LuxConfig) GetVMsConfigPath() string {
 	return filepath.Join(c.GetConfigsPath(), "vms")
 }
 
-// GetSubnetsConfigPath returns the subnets config directory path
-func (c *LuxConfig) GetSubnetsConfigPath() string {
-	return filepath.Join(c.GetConfigsPath(), "subnets")
+// GetNetsConfigPath returns the nets config directory path
+func (c *LuxConfig) GetNetsConfigPath() string {
+	return filepath.Join(c.GetConfigsPath(), "nets")
 }
