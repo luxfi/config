@@ -12,7 +12,7 @@ const (
 	LogsDirKey                   = "log-dir"
 	TrackChainsKey               = "track-chains"
 	ChainConfigDirKey            = "chain-config-dir"
-	NetConfigDirKey              = "subnet-config-dir"
+	NetConfigDirKey              = "net-config-dir"
 	GenesisFileKey               = "genesis-file"
 	StakingTLSKeyPathKey         = "staking-tls-key-file"
 	StakingCertPathKey           = "staking-tls-cert-file"
