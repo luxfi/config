@@ -6,6 +6,7 @@ package config
 // Luxd config keys referenced by netrunner/cli.
 const (
 	HTTPHostKey                  = "http-host"
+	BootstrapNodesKey            = "bootstrap-nodes"
 	BootstrapIPsKey              = "bootstrap-ips"
 	BootstrapIDsKey              = "bootstrap-ids"
 	DBPathKey                    = "db-dir"
