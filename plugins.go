@@ -19,7 +19,7 @@ const (
 	// Well-known VM names
 	VMNameLuxEVM = "Lux EVM"
 	VMNameCoreVM = "Core VM"
-	VMNameAVM    = "AVM"
+	VMNameXVM    = "XVM"
 )
 
 // VMID computes the VM ID from a VM name.
@@ -42,7 +42,7 @@ func WellKnownVMIDs() map[string]string {
 	return map[string]string{
 		VMNameLuxEVM: VMID(VMNameLuxEVM),
 		VMNameCoreVM: VMID(VMNameCoreVM),
-		VMNameAVM:    VMID(VMNameAVM),
+		VMNameXVM:    VMID(VMNameXVM),
 	}
 }
 
