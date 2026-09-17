@@ -71,19 +71,19 @@ const (
 
 // Constraints defines validation rules for a flag.
 type Constraints struct {
-	Min           interface{} `json:"min,omitempty"`
-	Max           interface{} `json:"max,omitempty"`
-	Enum          []string    `json:"enum,omitempty"`
-	Pattern       string      `json:"pattern,omitempty"`
-	RequiredWith  []string    `json:"required_with,omitempty"`
-	ConflictsWith []string    `json:"conflicts_with,omitempty"`
+	Min           any      `json:"min,omitempty"`
+	Max           any      `json:"max,omitempty"`
+	Enum          []string `json:"enum,omitempty"`
+	Pattern       string   `json:"pattern,omitempty"`
+	RequiredWith  []string `json:"required_with,omitempty"`
+	ConflictsWith []string `json:"conflicts_with,omitempty"`
 }
 
 // FlagSpec describes a single configuration flag.
 type FlagSpec struct {
 	Key               string       `json:"key"`
 	Type              FlagType     `json:"type"`
-	Default           interface{}  `json:"default,omitempty"`
+	Default           any          `json:"default,omitempty"`
 	Description       string       `json:"description"`
 	Category          Category     `json:"category"`
 	Deprecated        bool         `json:"deprecated,omitempty"`

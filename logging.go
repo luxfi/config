@@ -238,7 +238,7 @@ func (l *LoggerAdapter) Sugared() *zap.SugaredLogger {
 }
 
 // WithContext adds common context fields
-func (l *LoggerAdapter) WithContext(ctx map[string]interface{}) *LoggerAdapter {
+func (l *LoggerAdapter) WithContext(ctx map[string]any) *LoggerAdapter {
 	fields := make([]zap.Field, 0, len(ctx))
 	for k, v := range ctx {
 		fields = append(fields, zap.Any(k, v))
@@ -248,7 +248,7 @@ func (l *LoggerAdapter) WithContext(ctx map[string]interface{}) *LoggerAdapter {
 
 // FormatError provides consistent error formatting
 // This fixes issues like "last checked %s" format bugs
-func FormatError(err error, context string, args ...interface{}) string {
+func FormatError(err error, context string, args ...any) string {
 	if len(args) > 0 {
 		context = fmt.Sprintf(context, args...)
 	}

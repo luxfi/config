@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
@@ -535,12 +536,7 @@ func (pm *PluginPackageManager) MigrateFromLegacy(ctx context.Context, legacyDir
 // Helper functions
 
 func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, item)
 }
 
 func removeString(slice []string, item string) []string {
